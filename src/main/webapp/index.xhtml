@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+<h:head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Tarefas</title>
+    <h:outputStylesheet name="css/app.css"/>
+</h:head>
+<h:body>
+    <div class="page">
+        <header class="hero">
+            <p class="eyebrow">WebLogic 15 · Jakarta Faces 3.0</p>
+            <h1>Lista de tarefas</h1>
+            <p class="lede">Crie, edite, conclua e filtre tarefas persistidas no Oracle Database.</p>
+        </header>
+
+        <h:form id="todoForm" styleClass="card">
+            <h:messages id="messages" styleClass="messages" infoClass="info" errorClass="error" globalOnly="true"/>
+
+            <fieldset class="composer">
+                <legend>
+                    <h:outputText value="#{todoBean.editing ? 'Editar tarefa' : 'Nova tarefa'}"/>
+                </legend>
+                <label class="field">
+                    <span>Título</span>
+                    <h:inputText id="title" value="#{todoBean.title}" maxlength="200" styleClass="input"
+                                 required="true" requiredMessage="O título é obrigatório"/>
+                    <h:message for="title" styleClass="field-error"/>
+                </label>
+                <label class="field">
+                    <span>Descrição</span>
+                    <h:inputTextarea id="description" value="#{todoBean.description}" maxlength="1000"
+                                     styleClass="textarea" rows="3"/>
+                </label>
+                <div class="actions">
+                    <h:commandButton value="#{todoBean.editing ? 'Salvar' : 'Adicionar'}"
+                                     action="#{todoBean.create}" styleClass="btn primary">
+                        <f:ajax execute="@form" render="@form"/>
+                    </h:commandButton>
+                    <h:commandButton value="Cancelar" action="#{todoBean.cancelEdit}"
+                                     styleClass="btn ghost" rendered="#{todoBean.editing}" immediate="true">
+                        <f:ajax render="@form"/>
+                    </h:commandButton>
+                </div>
+            </fieldset>
+
+            <nav class="filters" aria-label="Filtros">
+                <ui:repeat value="#{todoBean.filters}" var="item">
+                    <h:commandButton value="#{item.label()}" action="#{todoBean.applyFilter(item)}"
+                                     styleClass="#{todoBean.filter eq item ? 'chip active' : 'chip'}">
+                        <f:ajax render="@form"/>
+                    </h:commandButton>
+                </ui:repeat>
+            </nav>
+
+            <h:panelGroup layout="block" styleClass="empty" rendered="#{empty todoBean.todos}">
+                Nenhuma tarefa neste filtro.
+            </h:panelGroup>
+
+            <h:dataTable id="todos" value="#{todoBean.todos}" var="todo" styleClass="table"
+                         rendered="#{not empty todoBean.todos}">
+                <h:column>
+                    <f:facet name="header">Status</f:facet>
+                    <span class="#{todo.done ? 'badge done' : 'badge open'}">
+                        <h:outputText value="#{todo.done ? 'Concluída' : 'Aberta'}"/>
+                    </span>
+                </h:column>
+                <h:column>
+                    <f:facet name="header">Título</f:facet>
+                    <strong class="#{todo.done ? 'strike' : ''}">
+                        <h:outputText value="#{todo.title}"/>
+                    </strong>
+                </h:column>
+                <h:column>
+                    <f:facet name="header">Descrição</f:facet>
+                    <h:outputText value="#{todo.description}"/>
+                </h:column>
+                <h:column>
+                    <f:facet name="header">Ações</f:facet>
+                    <div class="row-actions">
+                        <h:commandButton value="#{todo.done ? 'Reabrir' : 'Concluir'}"
+                                         action="#{todoBean.toggle(todo)}" styleClass="btn tiny">
+                            <f:ajax render="@form"/>
+                        </h:commandButton>
+                        <h:commandButton value="Editar" action="#{todoBean.startEdit(todo)}" styleClass="btn tiny ghost">
+                            <f:ajax render="@form"/>
+                        </h:commandButton>
+                        <h:commandButton value="Excluir" action="#{todoBean.delete(todo)}" styleClass="btn tiny danger">
+                            <f:ajax render="@form"/>
+                        </h:commandButton>
+                    </div>
+                </h:column>
+            </h:dataTable>
+        </h:form>
+    </div>
+</h:body>
+</html>

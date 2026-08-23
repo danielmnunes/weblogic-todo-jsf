@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<weblogic-web-app xmlns="http://xmlns.oracle.com/weblogic/weblogic-web-app">
+    <context-root>/todo</context-root>
+    <resource-description>
+        <res-ref-name>jdbc/TodoDS</res-ref-name>
+        <jndi-name>jdbc/TodoDS</jndi-name>
+    </resource-description>
+    <container-descriptor>
+        <prefer-web-inf-classes>false</prefer-web-inf-classes>
+        <show-archived-real-path-enabled>true</show-archived-real-path-enabled>
+    </container-descriptor>
+</weblogic-web-app>

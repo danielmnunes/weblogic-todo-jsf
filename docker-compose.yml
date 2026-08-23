@@ -1,0 +1,41 @@
+services:
+  db:
+    image: docker.io/gvenzl/oracle-free:23-slim-faststart
+    environment:
+      ORACLE_PASSWORD: OraclePassword1
+      APP_USER: todo
+      APP_USER_PASSWORD: TodoPassword1
+    ports:
+      - "1521:1521"
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+      - ./docker/oracle/init:/container-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 15s
+      timeout: 10s
+      retries: 40
+      start_period: 120s
+    shm_size: 1g
+
+  weblogic:
+    build:
+      context: .
+      dockerfile: docker/weblogic/Dockerfile
+    image: localhost/weblogic-todo-jsf:local
+    ports:
+      - "7001:7001"
+    environment:
+      DOMAIN_NAME: todo_domain
+      PRODUCTION_MODE: dev
+      ADMINISTRATION_PORT_ENABLED: "false"
+      DB_HOST: db
+      DB_URL: jdbc:oracle:thin:@//db:1521/FREEPDB1
+      DB_USER: todo
+      DB_PASSWORD: TodoPassword1
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  oracle-data:

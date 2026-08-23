@@ -1,0 +1,9 @@
+.git
+.idea
+.vscode
+*.iml
+src/test
+src/it
+README.md
+target/*
+!target/weblogic-todo-jsf.war
