@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -59,10 +60,40 @@ class TodoBeanTest {
     }
 
     @Test
-    void getTodosDelegatesToService() {
+    void getTodosCachesResultsUntilFilterChanges() {
+        var all = List.of(Todo.create("a", null));
+        var done = List.of(Todo.create("b", null));
+        when(service.list(TodoFilter.ALL)).thenReturn(all);
+        when(service.list(TodoFilter.DONE)).thenReturn(done);
+
+        assertEquals(all, bean.getTodos());
+        assertEquals(all, bean.getTodos());
+        verify(service, times(1)).list(TodoFilter.ALL);
+
+        bean.applyFilter(TodoFilter.DONE);
+        assertEquals(done, bean.getTodos());
+        assertEquals(done, bean.getTodos());
+        verify(service, times(1)).list(TodoFilter.DONE);
+    }
+
+    @Test
+    void successfulMutationsInvalidateCachedTodos() {
         var todos = List.of(Todo.create("a", null));
+        var todo = Todo.create("b", null);
+        todo.setId(2L);
         when(service.list(TodoFilter.ALL)).thenReturn(todos);
-        assertEquals(todos, bean.getTodos());
+
+        bean.getTodos();
+        bean.setTitle("Nova");
+        bean.create();
+        bean.getTodos();
+
+        bean.toggle(todo);
+        bean.getTodos();
+        bean.delete(todo);
+        bean.getTodos();
+
+        verify(service, times(4)).list(TodoFilter.ALL);
     }
 
     @Test

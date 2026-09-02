@@ -26,6 +26,7 @@ public class TodoBean implements Serializable {
     private String description;
     private Long editingId;
     private TodoFilter filter = TodoFilter.ALL;
+    private transient List<Todo> todos;
 
     @Inject
     public TodoBean(TodoService service, FacesMessages messages) {
@@ -39,7 +40,10 @@ public class TodoBean implements Serializable {
     }
 
     public List<Todo> getTodos() {
-        return service.list(filter);
+        if (todos == null) {
+            todos = service.list(filter);
+        }
+        return todos;
     }
 
     public TodoFilter[] getFilters() {
@@ -56,11 +60,13 @@ public class TodoBean implements Serializable {
                 messages.info("Tarefa atualizada");
             }
             clearForm();
+            invalidateTodos();
         } catch (IllegalArgumentException ex) {
             messages.error(ex.getMessage());
         } catch (TodoNotFoundException ex) {
             messages.error(ex.getMessage());
             clearForm();
+            invalidateTodos();
         }
     }
 
@@ -77,8 +83,10 @@ public class TodoBean implements Serializable {
     public void toggle(Todo todo) {
         try {
             service.toggle(todo.getId());
+            invalidateTodos();
         } catch (TodoNotFoundException ex) {
             messages.error(ex.getMessage());
+            invalidateTodos();
         }
     }
 
@@ -88,14 +96,20 @@ public class TodoBean implements Serializable {
             if (todo.getId().equals(editingId)) {
                 clearForm();
             }
+            invalidateTodos();
             messages.info("Tarefa excluída");
         } catch (TodoNotFoundException ex) {
             messages.error(ex.getMessage());
+            invalidateTodos();
         }
     }
 
     public void applyFilter(TodoFilter filter) {
-        this.filter = filter == null ? TodoFilter.ALL : filter;
+        var effective = filter == null ? TodoFilter.ALL : filter;
+        if (this.filter != effective) {
+            this.filter = effective;
+            invalidateTodos();
+        }
     }
 
     public boolean isEditing() {
@@ -134,5 +148,9 @@ public class TodoBean implements Serializable {
         title = null;
         description = null;
         editingId = null;
+    }
+
+    private void invalidateTodos() {
+        todos = null;
     }
 }
