@@ -77,23 +77,56 @@ class TodoBeanTest {
     }
 
     @Test
-    void successfulMutationsInvalidateCachedTodos() {
+    void reapplyingCurrentFilterKeepsCachedTodos() {
+        var todos = List.of(Todo.create("a", null));
+        when(service.list(TodoFilter.ALL)).thenReturn(todos);
+
+        bean.getTodos();
+        bean.applyFilter(TodoFilter.ALL);
+
+        assertEquals(todos, bean.getTodos());
+        verify(service, times(1)).list(TodoFilter.ALL);
+    }
+
+    @Test
+    void successfulCreateInvalidatesCachedTodos() {
+        var todos = List.of(Todo.create("a", null));
+        when(service.list(TodoFilter.ALL)).thenReturn(todos);
+
+        bean.getTodos();
+        bean.setTitle("Nova");
+        bean.create();
+
+        assertEquals(todos, bean.getTodos());
+        verify(service, times(2)).list(TodoFilter.ALL);
+    }
+
+    @Test
+    void successfulToggleInvalidatesCachedTodos() {
         var todos = List.of(Todo.create("a", null));
         var todo = Todo.create("b", null);
         todo.setId(2L);
         when(service.list(TodoFilter.ALL)).thenReturn(todos);
 
         bean.getTodos();
-        bean.setTitle("Nova");
-        bean.create();
-        bean.getTodos();
-
         bean.toggle(todo);
+
+        assertEquals(todos, bean.getTodos());
+        verify(service, times(2)).list(TodoFilter.ALL);
+    }
+
+    @Test
+    void successfulDeleteInvalidatesCachedTodos() {
+        var todos = List.of(Todo.create("a", null));
+        var todo = Todo.create("b", null);
+        todo.setId(2L);
+        when(service.list(TodoFilter.ALL)).thenReturn(todos);
+
         bean.getTodos();
         bean.delete(todo);
-        bean.getTodos();
 
-        verify(service, times(4)).list(TodoFilter.ALL);
+        assertEquals(todos, bean.getTodos());
+        verify(service, times(2)).list(TodoFilter.ALL);
     }
 
     @Test
@@ -111,14 +144,19 @@ class TodoBeanTest {
 
     @Test
     void createShowsValidationErrorWithoutClearing() {
+        var todos = List.of(Todo.create("a", null));
         bean.setTitle(" ");
+        when(service.list(TodoFilter.ALL)).thenReturn(todos);
         doThrow(new IllegalArgumentException("O título é obrigatório"))
                 .when(service).create(" ", null);
 
+        bean.getTodos();
         bean.create();
 
         verify(messages).error("O título é obrigatório");
         assertEquals(" ", bean.getTitle());
+        assertEquals(todos, bean.getTodos());
+        verify(service, times(1)).list(TodoFilter.ALL);
     }
 
     @Test
