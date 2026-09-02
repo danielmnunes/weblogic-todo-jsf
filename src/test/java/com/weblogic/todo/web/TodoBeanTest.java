@@ -149,12 +149,16 @@ class TodoBeanTest {
         var todo = Todo.create("A", null);
         todo.setId(9L);
         bean.startEdit(todo);
+        when(service.list(TodoFilter.ALL)).thenReturn(List.of(todo));
         doThrow(new TodoNotFoundException(9L)).when(service).update(9L, "A", null);
 
+        bean.getTodos();
         bean.create();
 
         verify(messages).error("Tarefa 9 não encontrada");
         assertFalse(bean.isEditing());
+        assertEquals(List.of(todo), bean.getTodos());
+        verify(service, times(2)).list(TodoFilter.ALL);
     }
 
     @Test
@@ -174,11 +178,15 @@ class TodoBeanTest {
     void toggleMissingShowsError() {
         var todo = Todo.create("A", null);
         todo.setId(1L);
+        when(service.list(TodoFilter.ALL)).thenReturn(List.of(todo));
         doThrow(new TodoNotFoundException(1L)).when(service).toggle(1L);
 
+        bean.getTodos();
         bean.toggle(todo);
 
         verify(messages).error("Tarefa 1 não encontrada");
+        assertEquals(List.of(todo), bean.getTodos());
+        verify(service, times(2)).list(TodoFilter.ALL);
     }
 
     @Test
@@ -197,11 +205,15 @@ class TodoBeanTest {
     void deleteMissingShowsError() {
         var todo = Todo.create("A", null);
         todo.setId(2L);
+        when(service.list(TodoFilter.ALL)).thenReturn(List.of(todo));
         doThrow(new TodoNotFoundException(2L)).when(service).delete(2L);
 
+        bean.getTodos();
         bean.delete(todo);
 
         verify(messages).error("Tarefa 2 não encontrada");
+        assertEquals(List.of(todo), bean.getTodos());
+        verify(service, times(2)).list(TodoFilter.ALL);
     }
 
     @Test
